@@ -70,16 +70,17 @@ export default function Home() {
       </button>
 
       {result && (
-        <div className="mt-6 border p-4 rounded bg-gray-50 space-y-2">
-          <p><strong>🎯 Hook :</strong> {result.hook}</p>
-          <p><strong>📝 Description :</strong> {result.description}</p>
-          {result.hashtags && result.hashtags.length > 0 ? (
-            <p><strong>#️⃣ Hashtags :</strong> {result.hashtags.join(" ")}</p>
-          ) : (
-            <p><strong>#️⃣ Hashtags :</strong> Aucun hashtag trouvé.</p>
-          )}
-        </div>
-      )}
+  <div className="mt-6 border p-4 rounded bg-gray-50 space-y-2">
+    {result.hook && <p><strong>🎯 Hook :</strong> {result.hook}</p>}
+    {result.description && <p><strong>📝 Description :</strong> {result.description}</p>}
+    {Array.isArray(result.hashtags) && result.hashtags.length > 0 ? (
+      <p><strong>#️⃣ Hashtags :</strong> {result.hashtags.join(" ")}</p>
+    ) : (
+      <p><strong>#️⃣ Hashtags :</strong> Aucun hashtag trouvé.</p>
+    )}
+  </div>
+)}
+
     </main>
   );
 }
