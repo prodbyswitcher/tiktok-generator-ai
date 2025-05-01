@@ -21,14 +21,21 @@ export default function Home() {
 
       const data = await res.json();
 
-      const content = data.result || '';
-      const hook = content.match(/Hook:(.*)/i)?.[1]?.trim();
-      const description = content.match(/Description:(.*)/i)?.[1]?.trim();
-      const hashtags = content.match(/Hashtags:(.*)/i)?.[1]?.trim().split(/\s+/);
+      if (!data.result) {
+        setResult({ hook: 'Aucune réponse.', description: '', hashtags: [] });
+        setLoading(false);
+        return;
+      }
+
+      const content = data.result;
+      const hook = content.match(/Hook:(.*)/i)?.[1]?.trim() || 'Pas de hook détecté.';
+      const description = content.match(/Description:(.*)/i)?.[1]?.trim() || 'Pas de description détectée.';
+      const hashtags = content.match(/Hashtags:(.*)/i)?.[1]?.trim()?.split(/\s+/) || [];
 
       setResult({ hook, description, hashtags });
     } catch (err) {
       console.error('Erreur API:', err);
+      setResult({ hook: 'Erreur serveur.', description: '', hashtags: [] });
     } finally {
       setLoading(false);
     }
@@ -66,7 +73,11 @@ export default function Home() {
         <div className="mt-6 border p-4 rounded bg-gray-50 space-y-2">
           <p><strong>🎯 Hook :</strong> {result.hook}</p>
           <p><strong>📝 Description :</strong> {result.description}</p>
-          <p><strong>#️⃣ Hashtags :</strong> {result.hashtags.join(' ')}</p>
+          {result.hashtags && result.hashtags.length > 0 ? (
+            <p><strong>#️⃣ Hashtags :</strong> {result.hashtags.join(" ")}</p>
+          ) : (
+            <p><strong>#️⃣ Hashtags :</strong> Aucun hashtag trouvé.</p>
+          )}
         </div>
       )}
     </main>
