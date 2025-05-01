@@ -1,45 +1,47 @@
-import { OpenAI } from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import axios from "axios";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  const { type, topic } = req.body;
+  const { type, topic, lang = "fr", style = "" } = req.body;
 
   if (!type || !topic) {
     return res.status(400).json({ error: "Champs manquants" });
   }
 
-  const prompt = `Tu es un expert en création de vidéos virales TikTok. Pour une vidéo de type "${type}" sur le sujet "${topic}", génère impérativement les éléments suivants, dans ce format exact :
+  const stylePart = style ? ` avec un style ${style}` : '';
+  const prompt = `Tu es un expert en vidéos TikTok virales.
+Génère ce contenu en ${lang === 'en' ? 'anglais' : 'français'} pour une vidéo de type "${type}" sur le sujet "${topic}"${stylePart}, au format suivant :
 
-Hook: Une phrase d'accroche percutante
-Description: Une description engageante
-Hashtags: #hashtag1 #hashtag2 #hashtag3 ...
-
-⚠️ Ne commence jamais ta réponse par un mot d’introduction. Ne mets aucun titre ou texte autour. Réponds uniquement avec :
 Hook: ...
 Description: ...
-Hashtags: ...
-`;
+Hashtags: #hashtag1 #hashtag2 #hashtag3 ...
+
+Réponds uniquement avec ces 3 lignes. Pas d'introduction, pas de titre, pas de remarques.`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.8,
-    });
+    const response = await axios.post(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        model: "llama3-8b-8192",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    if (!completion.choices || completion.choices.length === 0) {
-      return res.status(500).json({ error: "Réponse OpenAI vide" });
-    }
+    const output = response.data.choices[0].message.content;
+    res.status(200).json({ result: output });
 
-    res.status(200).json({ result: completion.choices[0].message.content });
   } catch (error) {
+    console.error("🔥 Erreur Groq API :", error.response?.data || error.message);
     res.status(500).json({ error: error.message });
   }
 }
